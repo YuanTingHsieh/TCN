@@ -4,8 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 import numpy as np
-from TCN.copy_memory.utils import data_generator
-from TCN.copy_memory.model import TCN
+from utils import data_generator
+from model import TCN
 import time
 
 
@@ -69,6 +69,12 @@ kernel_size = args.ksize
 dropout = args.dropout
 model = TCN(1, n_classes, channel_sizes, kernel_size, dropout=dropout)
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+total_params = count_parameters(model)
+print("Total params are ", total_params)
+
 if args.cuda:
     model.cuda()
     train_x = train_x.cuda()
@@ -89,8 +95,8 @@ def evaluate():
     correct = pred.eq(test_y.data.view_as(pred)).cpu().sum()
     counter = out.view(-1, n_classes).size(0)
     print('\nTest set: Average loss: {:.8f}  |  Accuracy: {:.4f}\n'.format(
-        loss.data[0], 100. * correct / counter))
-    return loss.data[0]
+        loss.item(), 100. * float(correct) / counter))
+    return loss.item()
 
 
 def train(ep):
@@ -111,6 +117,7 @@ def train(ep):
         out = model(x.unsqueeze(1).contiguous())
         loss = criterion(out.view(-1, n_classes), y.view(-1))
         pred = out.view(-1, n_classes).data.max(1, keepdim=True)[1]
+
         correct += pred.eq(y.data.view_as(pred)).cpu().sum()
         counter += out.view(-1, n_classes).size(0)
         if args.clip > 0:
@@ -125,7 +132,7 @@ def train(ep):
             print('| Epoch {:3d} | {:5d}/{:5d} batches | lr {:2.5f} | ms/batch {:5.2f} | '
                   'loss {:5.8f} | accuracy {:5.4f}'.format(
                 ep, batch_idx, n_train // batch_size+1, args.lr, elapsed * 1000 / args.log_interval,
-                avg_loss.data[0], 100. * correct / counter))
+                avg_loss.item(), 100. * float(correct) / counter))
             start_time = time.time()
             total_loss = 0
             correct = 0

@@ -2,7 +2,8 @@ import unidecode
 import torch
 from torch.autograd import Variable
 from collections import Counter
-import observations
+
+import ptb
 import os
 import pickle
 
@@ -11,7 +12,9 @@ cuda = torch.cuda.is_available()
 
 
 def data_generator(args):
-    file, testfile, valfile = getattr(observations, args.dataset)('data/')
+    #file, testfile, valfile = getattr(observations, args.dataset)('data/')
+    if args.dataset == 'ptb':
+        file, testfile, valfile = ptb.ptb('./data')
     file_len = len(file)
     valfile_len = len(valfile)
     testfile_len = len(testfile)

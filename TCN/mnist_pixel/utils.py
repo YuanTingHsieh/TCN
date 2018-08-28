@@ -3,12 +3,12 @@ from torchvision import datasets, transforms
 
 
 def data_generator(root, batch_size):
-    train_set = datasets.MNIST(root=root, train=True, download=True,
+    train_set = datasets.MNIST(root=root, train=True, download=False,
                                transform=transforms.Compose([
                                    transforms.ToTensor(),
                                    transforms.Normalize((0.1307,), (0.3081,))
                                ]))
-    test_set = datasets.MNIST(root=root, train=False, download=True,
+    test_set = datasets.MNIST(root=root, train=False, download=False,
                               transform=transforms.Compose([
                                   transforms.ToTensor(),
                                   transforms.Normalize((0.1307,), (0.3081,))

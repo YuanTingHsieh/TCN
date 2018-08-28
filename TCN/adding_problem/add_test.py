@@ -2,8 +2,8 @@ import torch
 import argparse
 import torch.optim as optim
 import torch.nn.functional as F
-from TCN.adding_problem.model import TCN
-from TCN.adding_problem.utils import data_generator
+from model import TCN
+from utils import data_generator
 
 parser = argparse.ArgumentParser(description='Sequence Modeling - The Adding Problem')
 parser.add_argument('--batch_size', type=int, default=32, metavar='N',
@@ -16,20 +16,20 @@ parser.add_argument('--clip', type=float, default=-1,
                     help='gradient clip, -1 means no clip (default: -1)')
 parser.add_argument('--epochs', type=int, default=10,
                     help='upper epoch limit (default: 10)')
-parser.add_argument('--ksize', type=int, default=7,
-                    help='kernel size (default: 7)')
-parser.add_argument('--levels', type=int, default=8,
-                    help='# of levels (default: 8)')
-parser.add_argument('--seq_len', type=int, default=400,
-                    help='sequence length (default: 400)')
+parser.add_argument('--ksize', type=int, default=6,
+                    help='kernel size (default: 6)')
+parser.add_argument('--levels', type=int, default=7,
+                    help='# of levels (default: 7)')
+parser.add_argument('--seq_len', type=int, default=200,
+                    help='sequence length (default: 200)')
 parser.add_argument('--log-interval', type=int, default=100, metavar='N',
                     help='report interval (default: 100')
 parser.add_argument('--lr', type=float, default=4e-3,
                     help='initial learning rate (default: 4e-3)')
 parser.add_argument('--optim', type=str, default='Adam',
                     help='optimizer to use (default: Adam)')
-parser.add_argument('--nhid', type=int, default=30,
-                    help='number of hidden units per layer (default: 30)')
+parser.add_argument('--nhid', type=int, default=27,
+                    help='number of hidden units per layer (default: 27)')
 parser.add_argument('--seed', type=int, default=1111,
                     help='random seed (default: 1111)')
 args = parser.parse_args()
@@ -56,6 +56,13 @@ channel_sizes = [args.nhid]*args.levels
 kernel_size = args.ksize
 dropout = args.dropout
 model = TCN(input_channels, n_classes, channel_sizes, kernel_size=kernel_size, dropout=dropout)
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+total_params = count_parameters(model)
+print("Total params are ", total_params)
+
 
 if args.cuda:
     model.cuda()
@@ -86,7 +93,7 @@ def train(epoch):
             torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
         optimizer.step()
         batch_idx += 1
-        total_loss += loss.data[0]
+        total_loss += loss.item()
 
         if batch_idx % args.log_interval == 0:
             cur_loss = total_loss / args.log_interval
@@ -100,8 +107,8 @@ def evaluate():
     model.eval()
     output = model(X_test)
     test_loss = F.mse_loss(output, Y_test)
-    print('\nTest set: Average loss: {:.6f}\n'.format(test_loss.data[0]))
-    return test_loss.data[0]
+    print('\nTest set: Average loss: {:.6f}\n'.format(test_loss.item()))
+    return test_loss.item()
 
 
 for ep in range(1, epochs+1):

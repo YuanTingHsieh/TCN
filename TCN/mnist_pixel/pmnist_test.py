@@ -2,8 +2,8 @@ import torch
 from torch.autograd import Variable
 import torch.optim as optim
 import torch.nn.functional as F
-from TCN.mnist_pixel.utils import data_generator
-from TCN.mnist_pixel.model import TCN
+from utils import data_generator
+from model import TCN
 import numpy as np
 import argparse
 
@@ -12,8 +12,8 @@ parser.add_argument('--batch_size', type=int, default=64, metavar='N',
                     help='batch size (default: 64)')
 parser.add_argument('--cuda', action='store_false',
                     help='use CUDA (default: True)')
-parser.add_argument('--dropout', type=float, default=0.05,
-                    help='dropout applied to layers (default: 0.05)')
+parser.add_argument('--dropout', type=float, default=0.0,
+                    help='dropout applied to layers (default: 0.0)')
 parser.add_argument('--clip', type=float, default=-1,
                     help='gradient clip, -1 means no clip (default: -1)')
 parser.add_argument('--epochs', type=int, default=20,
@@ -57,6 +57,12 @@ channel_sizes = [args.nhid] * args.levels
 kernel_size = args.ksize
 model = TCN(input_channels, n_classes, channel_sizes, kernel_size=kernel_size, dropout=args.dropout)
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+total_params = count_parameters(model)
+print("Total params are ", total_params)
+
 if args.cuda:
     model.cuda()
     permute = permute.cuda()
@@ -87,7 +93,7 @@ def train(ep):
         if batch_idx > 0 and batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tSteps: {}'.format(
                 ep, batch_idx * batch_size, len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), train_loss.data[0]/args.log_interval, steps))
+                100. * batch_idx / len(train_loader), train_loss.item()/args.log_interval, steps))
             train_loss = 0
 
 
@@ -103,7 +109,7 @@ def test():
             data = data[:, :, permute]
         data, target = Variable(data, volatile=True), Variable(target)
         output = model(data)
-        test_loss += F.nll_loss(output, target, size_average=False).data[0]
+        test_loss += F.nll_loss(output, target, size_average=False).item()
         pred = output.data.max(1, keepdim=True)[1]
         correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 

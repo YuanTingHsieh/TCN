@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 import sys
 sys.path.append("../../")
-from TCN.char_cnn.utils import *
-from TCN.char_cnn.model import TCN
+from utils import *
+from model import TCN
 import time
 import math
 
@@ -73,6 +73,12 @@ dropout = args.dropout
 emb_dropout = args.emb_dropout
 model = TCN(args.emsize, n_characters, num_chans, kernel_size=k_size, dropout=dropout, emb_dropout=emb_dropout)
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+total_params = count_parameters(model)
+print("Total params are ", total_params)
+
 
 if args.cuda:
     model.cuda()
@@ -116,6 +122,8 @@ def train(epoch):
         if i + args.seq_len - args.validseqlen >= source_len:
             continue
         inp, target = get_batch(source, i, args)
+        
+
         optimizer.zero_grad()
         output = model(inp)
         eff_history = args.seq_len - args.validseqlen

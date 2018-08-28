@@ -1,5 +1,5 @@
 from torch import nn
-from TCN.tcn import TemporalConvNet
+from tcn import TemporalConvNet
 
 
 class TCN(nn.Module):
